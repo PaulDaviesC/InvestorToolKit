@@ -1,48 +1,29 @@
 import pandas as pd
 import time
 
-def get_index_of_string(table, str, type):
-    for column in table:
-      index = table[column][table[column] == str].index
-      if index.size > 0 and index[0] > 1:
-        return index[0] if type == "row" else column
-
-def get_value_of_column(row_str, col_str):
-  row = get_index_of_string(table, row_str, "row")
-  col = get_index_of_string(table, col_str, "col")
-  return table[col][row]
-
-def get_promotor_shareholding(table):
-  return get_value_of_column(
-    "(A) Promoter & Promoter Group",
-    "Shareholding as a % of total no. of shares (calculated as per SCRR, 1957)As a % of (A+B+C2)"
-  )
-
 def whether_warrant_issued(table):
-  return get_value_of_column(
-    "Whether the Listed Entity has issued any Warrants ?",
-    "Yes/No"
-  )
+  return table[table[0] == "Whether the Listed Entity has issued any Warrants ?"][1].values[0]
 
 def whether_promotor_share_pledged(table):
-  return get_value_of_column(
-    "Whether any shares held by promoters are pledge or otherwise encumbered?",
-    "Yes/No"
-  )
+  return table[table[0] == "Whether any shares held by promoters are pledge or otherwise encumbered?"][1].values[0]
 
-scrip_code = 500302
+scrip_code = 533200
 for quarter in range(88, 101):
   url = "https://www.bseindia.com/corporates/shpSecurities.aspx?scripcd=%s&qtrid=%s" %(scrip_code, quarter)
   print(url)
-  tables = pd.read_html(url)
+  tables = pd.read_html(url, attrs = {'border': '0', 'width': '100%', 'align': 'center', 'cellspacing': '1', 'cellpadding': '4'})
   try:
-    table = tables[0]
-    print("======%s======" %(table[1][8]))
-    if whether_warrant_issued(table) != "No": #Share warrants
+    print("======%s======" %(tables[0][1][1]))
+
+    sh_activity = tables[1]
+    if whether_warrant_issued(sh_activity) != "No": #Share warrants
       print("Share warrant issued")
-    if whether_promotor_share_pledged(table) != "No":
+
+    if whether_promotor_share_pledged(tables[1]) != "No":
       print("Promoter share pledged")
-    print(get_promotor_shareholding(table)) #Promoter shareholding  %
+
+    sh_details = tables[2]
+    print(sh_details[sh_details[0] == "(A) Promoter & Promoter Group"][4].values[0]) #Promoter shareholding  %
     time.sleep(3)
   except:
     print("Error encountered while processing %s" %(url))
